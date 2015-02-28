@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html ng-app="superapp">
+<head>
+	<title></title>
+</head>
+<body>
+<div ng-controller="welcome">
+	<h1>{{message}}</h1>
+	<div awesome-dir></div>
+</div>
+<script type="text/javascript" src="bower_components/angular/angular.min.js"></script>
+<script type="text/javascript">
+	var app = angular.module("superapp", []);
+
+	app.service('dataModel', ['$rootScope', function($rootScope){
+		var self = this;
+		this.data = {
+			message: 'I love you',
+			messageOptions: [
+					'I am tired',
+					'I am happy',
+					'I am angry'
+				]
+		};
+
+		this.getAll = function() {
+			return this.data;
+		};
+
+		$rootScope.$on('addData', function(data) {
+			console.log('data');
+		});
+
+		$rootScope.$on('setMessage', function(ev, message) {
+			self.data.message = message;
+			$rootScope.$broadcast('change');
+		});
+
+
+	}]);
+	app.controller('welcome', ['$scope', function($scope){
+		$scope.message = 'Hello everybody';
+	}]).directive('awesomeDir', ['$timeout', '$rootScope', 'dataModel', function($timeout, $rootScope, dataModel){
+		// Runs during compile
+		return {
+			// priority: 1,
+			// terminal: true,
+			scope: {}, // {} = isolate, true = child, false/undefined = no change
+			// controller: function($scope, $element, $attrs, $transclude) {},
+			// require: 'ngModel', // Array = multiple requires, ? = optional, ^ = check parent elements
+			// restrict: 'A', // E = Element, A = Attribute, C = Class, M = Comment
+			// template: '<p>{{message}}</p>',
+			templateUrl: 'awesomeDir.html',
+			// replace: true,
+			// transclude: true,
+			// compile: function(tElement, tAttrs, function transclude(function(scope, cloneLinkingFn){ return function linking(scope, elm, attrs){}})),
+			link: function($scope, el, iAttrs, controller) {
+
+				var data = dataModel.getAll();
+				$scope.message = data.message;
+				$scope.options = data.messageOptions;
+
+				function reload() {
+
+					data = dataModel.getAll();
+					$scope.message = data.message;
+					$scope.options = data.messageOptions;
+					$scope.$apply();
+					console.timeEnd('change');
+				}
+				function handleChange(e) {
+					console.time('change');
+					$rootScope.$broadcast('setMessage', e.target.value);
+				}
+
+				$rootScope.$on('change', reload);
+
+				var select = el[0].querySelector('.message-select');
+				select.addEventListener('change', handleChange);
+
+			}
+		};
+	}]);
+</script>
+</body>
+</html>
